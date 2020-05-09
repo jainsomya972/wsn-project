@@ -20,8 +20,11 @@ network Wireless1
 {
     parameters:
         @display("bgi=background/terrain,s;bgb=1200,1200");
-        int noOfNodes = 100;
+        int noOfNodes;
+        int noOfSinks;
+        int noOfClusters;
+        int networkRadius @unit(m);
     submodules:
-        sink: Sink;
-        nodes[noOfNodes]: Sensor;
+        s[noOfSinks]: Sink;
+        n[noOfNodes]: Sensor;
 }

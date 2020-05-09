@@ -41,7 +41,7 @@ void Sensor::initialize(){
     getDisplayString().setTagArg("p", 0, x);
     getDisplayString().setTagArg("p", 1, y);
 
-    scheduleAt(100.0, new cMessage("Hoax"));
+//    scheduleAt(100.0, new cMessage("Hoax"));
 }
 
 void Sensor::handleMessage(cMessage *msg){
