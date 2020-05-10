@@ -9,6 +9,7 @@
 #include<omnetpp.h>
 #include<stdlib.h>
 #include<iostream>
+#include<vector>
 #include "position.h"
 #include "MsgOne.h"
 using namespace omnetpp;
@@ -31,11 +32,13 @@ class Sensor: public cSimpleModule {
         int hopCount = -1;
         simsignal_t broadcastSignalId;
 
-        vector<cModule> neighbours;
+        vector<cModule *> neighbours;
     protected:
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
         void getNeighbours();
+        void sendNeighbours(MsgOne *msg);
+        bool isCenterOfCluster();
 };
 
 Define_Module(Sensor);
@@ -57,6 +60,8 @@ void Sensor::initialize(){
         pair<int,int> res = getNodeCoordsInCircle(x, y, 600, 600, 500);
         x = res.first;
         y = res.second;
+        par("x").setDoubleValue(x);
+        par("y").setDoubleValue(y);
     }
     getDisplayString().setTagArg("p", 0, x);
     getDisplayString().setTagArg("p", 1, y);
@@ -73,39 +78,64 @@ void Sensor::handleMessage(cMessage *msg){
 
     //   cMessage *msg1 = new cMessage(msgOne);
         string str(msg->getName());
+        MsgOne *msg1 = dynamic_cast<MsgOne *>(msg);
 //        and str.compare("Init")==0
-        if(msg->isSelfMessage()){
-         int min=INT_MAX;int id;
+        if(msg->isSelfMessage() && str.compare("Init")==0){
 
-         for(int i=0;i<noOfNodes;i++){
-             cModule *node= getParentModule()->getSubmodule("n", i);
-             int nx = node->par("x").doubleValue();
-             int ny = node->par("y").doubleValue();
+         if(isCenterOfCluster()){
 
-             pair<double,double> p = getClusterCenter(600, 600, noOfClusters, clusterId, networkRadius);
-             if(distance(nx,ny,p.first,p.second)<min && clusterId == node->par("clusterId").intValue()){
-                     min=distance(nx,ny,p.first,p.second);
-                     id=node->getId();
-             }
-           }
-         if(id==getId()){
-             //start message transfer
-                    //means its cluster head
-                    MsgOne * msgOne=new MsgOne();
-                    msgOne->chId=getId();
-                    msgOne->chEnergy=energy;
-                    msgOne->hopCount=0;
-                    msgOne->senderId=getId();
-                    msgOne->clusterId=clusterId;
-                    //emit(20,&msgOne);
-                    //emit(lengthSignalId, queue.length());
-                    cout<<"initiated by : "<<getId()<<endl;
-                    cModule *sink = getParentModule()->getSubmodule("n", 1);
-                    sendDirect(msgOne, sink,"in");
-
+            //finding meighbours
+             chId = getId();
+            getNeighbours();
+            string s = "C:"+to_string(clusterId)+" CH:"+to_string(chId)+" E:"+to_string(energy);
+            bubble(s.c_str());
+            getDisplayString().setTagArg("i", 0, "misc/node_s");
+            sendNeighbours(new MsgOne(getId(),getId(),energy,0,clusterId));
          }
       }
+      else if(msg1){
+//          bubble("I got the message");
+          if(clusterId == msg1->clusterId && chId != msg1->chId){
 
+          }
+      }
+}
+
+
+void Sensor::getNeighbours(){
+    for(int i=0;i<noOfNodes;i++){
+         cModule *node= getParentModule()->getSubmodule("n", i);
+         int nx = node->par("x").doubleValue();
+         int ny = node->par("y").doubleValue();
+         if(distance(nx,ny,x,y) <= txRadius)
+              neighbours.push_back(node);
+    }
+}
+
+bool Sensor::isCenterOfCluster(){
+    int min=INT_MAX;int id;
+
+     for(int i=0;i<noOfNodes;i++){
+         cModule *node= getParentModule()->getSubmodule("n", i);
+         int nx = node->par("x").doubleValue();
+         int ny = node->par("y").doubleValue();
+
+         pair<double,double> p = getClusterCenter(600, 600, noOfClusters, clusterId, networkRadius);
+         if(distance(nx,ny,p.first,p.second)<min && clusterId == node->par("clusterId").intValue()){
+                 min=distance(nx,ny,p.first,p.second);
+                 id=node->getId();
+         }
+       }
+     if(id == getId())
+         return true;
+     else
+         return false;
+}
+
+void Sensor::sendNeighbours(MsgOne *msg){
+    for(int i=0;i<neighbours.size();i++){
+        sendDirect(new MsgOne(msg), neighbours[i],"in");
+    }
 }
 
 

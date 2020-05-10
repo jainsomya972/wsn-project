@@ -5,5 +5,5 @@ simple MsgOne
         int chId;
         int chEnergy;
         int hopCount;
-        
+        int clusterId;
 }

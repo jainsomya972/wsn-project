@@ -12,7 +12,22 @@ class MsgOne:public cMessage{
       MsgOne(){
         senderId=-1;
         hopCount=0;
+      }
 
-    }
+      MsgOne(int sid,int  chid,int chenergy,int hopcount,int cid){
+          senderId = sid;
+          chId = chid;
+          chEnergy = chenergy;
+          hopCount = hopcount;
+          clusterId = cid;
+      }
+
+      MsgOne(const MsgOne *msg){
+          senderId = msg->senderId;
+          chId = msg->chId;
+          chEnergy = msg->chEnergy;
+          hopCount = msg->hopCount;
+          clusterId = msg->clusterId;
+      }
 
 };

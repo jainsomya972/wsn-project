@@ -24,7 +24,7 @@ simple Sensor
 //    int relayId;
 //    int hopCount;
         
-     @display("i=old/ball_s");
+     @display("i=misc/node2_vs");
      double x @unit(m);                 // the x coordinate of the host
      double y @unit(m);                 // the y coordinate of the host
      double energy @unit(J);

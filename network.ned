@@ -19,7 +19,8 @@
 network Wireless1
 {
     parameters:
-        @display("bgi=background/terrain,s;bgb=1200,1200");
+        @display("bgi=background/pale,s;bgb=1200,1200");
+//		@display("bgb=1200,1200");
         int noOfNodes;
         int noOfSinks;
         int noOfClusters;
