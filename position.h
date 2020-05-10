@@ -35,3 +35,11 @@ int getClusterId(double x, double y, int cx, int cy, int radius, int clusters){
     double block = 2*PI/clusters;
     return (theta/block + 1);
 }
+
+pair<double,double> getClusterCenter(int cx,int cy,int clusters,int clusterId,int radius){
+    double block = 2*PI/clusters;
+    double theta = block*(clusterId)-block/2.0;
+    double rx = cx + radius*cos(theta)/2;
+    double ry = cy + radius*sin(theta)/2;
+    return make_pair(rx,ry);
+}
