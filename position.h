@@ -24,3 +24,14 @@ pair<int,int> getNodeCoordsInCircle(double x,double y, double cx, double cy, dou
 double distance(double x1,double y1,double x2,double y2){
     return sqrt((y2-y1)*(y2-y1)+(x2-x1)*(x2-x1));
 }
+
+int getClusterId(double x, double y, int cx, int cy, int radius, int clusters){
+    double m = (y-cy)/(x-cx);
+    double theta = atan(m);
+    if(x<cx)
+        theta+=PI;
+    else if(x>cx && y<cy)
+        theta+=2*PI;
+    double block = 2*PI/clusters;
+    return (theta/block + 1);
+}

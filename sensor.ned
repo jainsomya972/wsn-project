@@ -18,6 +18,12 @@
 simple Sensor
 {
     parameters:
+    
+    int clusterId = 0;
+//    int chId = -1;
+//    int relayId;
+//    int hopCount;
+        
      @display("i=old/ball_s");
      double x @unit(m);                 // the x coordinate of the host
      double y @unit(m);                 // the y coordinate of the host

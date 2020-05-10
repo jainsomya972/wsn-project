@@ -24,6 +24,7 @@ network Wireless1
         int noOfSinks;
         int noOfClusters;
         int networkRadius @unit(m);
+        int txRadius @unit(m); //this is d square radius threshhold d0
     submodules:
         s[noOfSinks]: Sink;
         n[noOfNodes]: Sensor;
