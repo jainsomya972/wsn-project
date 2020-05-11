@@ -97,14 +97,14 @@ void Sink::drawPath() {
 
 void Sink::drawClusters(){
     cLineFigure *line;
-    int r = networkRadius;
+    int r = networkRadius + 20;
     for(int i=0;i<noOfClusters;i++){
         double theta = (2*PI/noOfClusters)*i;
 
         line = new cLineFigure("cluster boundary");
         line->setStart(cFigure::Point(cx,cy));
         line->setEnd(cFigure::Point(cx + r*cos(theta), cy + r*sin(theta)));
-        line->setLineWidth(2);
+        line->setLineWidth(0.5);
         canvas->addFigure(line);
     }
 }

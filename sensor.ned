@@ -20,7 +20,7 @@ simple Sensor
     parameters:
     
     int clusterId = 0;
-//    int chId = -1;
+    int chId = -1;
 //    int relayId;
 //    int hopCount;
         

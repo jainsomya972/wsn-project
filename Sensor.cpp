@@ -12,6 +12,7 @@
 #include<vector>
 #include "position.h"
 #include "MsgOne.h"
+#include "energy.h"
 using namespace omnetpp;
 using namespace std;
 
@@ -21,7 +22,8 @@ class Sensor: public cSimpleModule {
 
         int nodeId;
         int networkRadius;
-        int txRadius;
+        double txRadius;
+        double epsFs,epsMp,eElec;
         int noOfClusters;
         int noOfNodes;
         int noOfSinks;
@@ -39,6 +41,9 @@ class Sensor: public cSimpleModule {
         void getNeighbours();
         void sendNeighbours(MsgOne *msg);
         bool isCenterOfCluster();
+
+        //setters
+        void setChId(int chid);
 };
 
 Define_Module(Sensor);
@@ -54,6 +59,10 @@ void Sensor::initialize(){
     noOfClusters = network->par("noOfClusters");
     noOfNodes = network->par("noOfNodes");
     noOfSinks = network->par("noOfSinks");
+    epsFs =  network->par("epsFs").doubleValue();
+    epsMp =  network->par("epsMp").doubleValue();
+    eElec =  network->par("eElec").doubleValue();
+
     energy=par("energy").doubleValue();
     //to check this
     if(distance(x,y,600,600)>500){
@@ -71,7 +80,8 @@ void Sensor::initialize(){
     clusterId = getClusterId(x,y,600,600,networkRadius, noOfClusters);
     par("clusterId").setIntValue(clusterId);
 
-    scheduleAt(0.1,new cMessage("Init"));
+    getNeighbours();
+    scheduleAt(0.01*getId(),new cMessage("Init"));
 }
 
 void Sensor::handleMessage(cMessage *msg){
@@ -85,8 +95,7 @@ void Sensor::handleMessage(cMessage *msg){
          if(isCenterOfCluster()){
 
             //finding meighbours
-             chId = getId();
-            getNeighbours();
+            setChId(getId());
             string s = "C:"+to_string(clusterId)+" CH:"+to_string(chId)+" E:"+to_string(energy);
             bubble(s.c_str());
             getDisplayString().setTagArg("i", 0, "misc/node_s");
@@ -94,9 +103,36 @@ void Sensor::handleMessage(cMessage *msg){
          }
       }
       else if(msg1){
-//          bubble("I got the message");
+
+          energy -= RxEnergy(sizeof(MsgOne), eElec);
+          par("energy").setDoubleValue(energy);
+
+          //same cluster and different cluster head
           if(clusterId == msg1->clusterId && chId != msg1->chId){
 
+              // our energy is less or (our energy is same but id is greater)
+//              if(energy <= msg1->chEnergy){
+                  cout<<"CH recieved!\n";
+                  // accept the new CH and relay the msg
+                  setChId(msg1->chId);
+                  relayId = msg1->senderId;
+                  hopCount = msg1->hopCount;
+
+                  getDisplayString().setTagArg("i", 0, "misc/node2_vs");
+                  sendNeighbours(new MsgOne(getId(),chId,msg1->chEnergy,hopCount+1,clusterId));
+//              }
+              // our energy is more or (energy is same and id is less)
+//              else if(energy > msg1->chEnergy /*|| (energy == msg1->chEnergy && getId() < msg1->chId)*/ ){
+//                  // announce self as new CH
+//                  setChId(getId());
+//                  relayId = -1;
+//                  hopCount = 0;
+//
+////                  scheduleAt(simTime()+1,new cMessage("declare CH"));
+//                  getDisplayString().setTagArg("i", 0, "misc/node_s");
+//                  sendNeighbours(new MsgOne(getId(), getId(), energy, 0, clusterId));
+//
+//              }
           }
       }
 }
@@ -136,6 +172,13 @@ void Sensor::sendNeighbours(MsgOne *msg){
     for(int i=0;i<neighbours.size();i++){
         sendDirect(new MsgOne(msg), neighbours[i],"in");
     }
+    energy -= TxEnergy(sizeof(MsgOne)*8, txRadius, eElec, epsFs, epsMp);
+    par("energy").setDoubleValue(energy);
+}
+
+void Sensor::setChId(int chid){
+    chId = chid;
+    par("chId").setIntValue(chId);
 }
 
 
