@@ -13,6 +13,7 @@
 #include "position.h"
 #include "MsgOne.h"
 #include "energy.h"
+#include "DataMsg.h"
 using namespace omnetpp;
 using namespace std;
 
@@ -35,13 +36,16 @@ class Sensor: public cSimpleModule {
         simsignal_t broadcastSignalId;
 
         vector<cModule *> neighbours;
+        vector<cModule *> sinks;
+
     protected:
         virtual void initialize() override;
         virtual void handleMessage(cMessage *msg) override;
         void getNeighbours();
         void sendNeighbours(MsgOne *msg);
         bool isCenterOfCluster();
-
+        cModule * getNodeFromID(int nodeId);
+        cModule * getNearestSink();
         //setters
         void setChId(int chid);
 };
@@ -82,6 +86,7 @@ void Sensor::initialize(){
 
     getNeighbours();
     scheduleAt(0.01*getId(),new cMessage("Init"));
+    scheduleAt(30*getId(),new cMessage("Data For Sink"));
 }
 
 void Sensor::handleMessage(cMessage *msg){
@@ -90,7 +95,24 @@ void Sensor::handleMessage(cMessage *msg){
         string str(msg->getName());
         MsgOne *msg1 = dynamic_cast<MsgOne *>(msg);
 //        and str.compare("Init")==0
-        if(msg->isSelfMessage() && str.compare("Init")==0){
+
+
+        if(msg->isSelfMessage() && str.compare("Data For Sink")==0){
+            cModule * relayNode ;
+            DataMsg *datamsg = new DataMsg(getId(),chId,8,5,clusterId);
+            if(hopCount>0){
+                relayNode = getNodeFromID(relayId);
+
+            }
+            else{
+                relayNode = getNodeFromID(chId);
+            }
+
+            sendDirect(datamsg,relayNode,"in");
+
+
+        }
+        else if(msg->isSelfMessage() && str.compare("Init")==0){
 
          if(isCenterOfCluster()){
 
@@ -146,6 +168,34 @@ void Sensor::getNeighbours(){
          if(distance(nx,ny,x,y) <= txRadius)
               neighbours.push_back(node);
     }
+}
+
+cModule* Sensor::getNodeFromID(int nodeId){
+    for(int i=0;i<noOfNodes;i++){
+         cModule *node= getParentModule()->getSubmodule("n", i);
+         int id = node->getId();
+
+         if(id==nodeId){
+             return node;
+         }
+    }
+    return nullptr;
+}
+
+cModule *  Sensor::getNearestSink(){
+    int minDis=INT_MAX;cModule * minDisSink;
+
+    for(int i=0;i<noOfSinks;i++){
+         cModule *node= getParentModule()->getSubmodule("s", i);
+         int nx = node->par("x").doubleValue();
+         int ny = node->par("y").doubleValue();
+         if(distance(nx,ny,x,y)<minDis){
+             minDis=distance(nx,ny,x,y);
+             minDisSink=node;
+         }
+
+    }
+    return minDisSink;
 }
 
 bool Sensor::isCenterOfCluster(){
